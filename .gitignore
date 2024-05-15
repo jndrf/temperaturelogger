@@ -1,0 +1,5 @@
+*.pyc
+
+wifi.cfg
+
+data/
