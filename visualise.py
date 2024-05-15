@@ -2,8 +2,9 @@
 
 import argparse
 import configparser
+import pandas as pd
 
-from math import log
+from numpy import log
 
 from calibration_plotter import determine_adc_response
 
@@ -21,10 +22,13 @@ def convert_voltage_to_resistance(voltage, vref=3.3, resistor=10e3):
 
 
 def ntc_response(resistance, rref=10e3):
-    '''return temperature according to extended "Steinhart and Hart" interpolation
+    '''return temperature in degree Celsius according to extended "Steinhart and Hart" interpolation
 
     the parameters are valid for NTC with B_{25/85} = 3977, i.e. NTC from the Vishay NTCLE100E3
     series  with R_{25} from 2200 to 10000 Ohm. The rref parameter needs to be set to R_{25}.
+
+    The resistance is accurate to less than 1 % in the [0, 55] °C range. This converts to an uncertainty
+    of less than 0.3 °C on the temperature
     '''
 
     A_1 = 3.354016e-3
@@ -35,7 +39,7 @@ def ntc_response(resistance, rref=10e3):
     logratio = log(resistance/rref)
 
     t_invers = A_1 + B_1*logratio + C_1*logratio**2 + D_1*logratio**3
-    return 1/t_invers
+    return 1/t_invers - 273.15  # convert to degree Celsius
 
 if __name__ == '__main__':
 
@@ -45,4 +49,19 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    df_calib = pd.read_excel(args.calibration)
+
+    adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
+
+
+    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC 1', 'ADC 2'])
+    print(df_temp)
+    df_temp['V_1'] = adc_response(df_temp['ADC 1'])
+    df_temp['V_2'] = adc_response(df_temp['ADC 2'])
+    df_temp['R_1'] = convert_voltage_to_resistance(df_temp['V_1'])
+    df_temp['R_2'] = convert_voltage_to_resistance(df_temp['V_2'])
+    df_temp['T_1'] = ntc_response(df_temp['R_1'])
+    df_temp['T_2'] = ntc_response(df_temp['R_2'])
+
+    print(df_temp)
     # main(args)
