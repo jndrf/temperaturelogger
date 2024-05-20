@@ -3,7 +3,9 @@
 import argparse
 import configparser
 import pandas as pd
+import matplotlib.pyplot as plt
 
+from matplotlib.dates import ConciseDateFormatter
 from numpy import log
 
 from calibration_plotter import determine_adc_response
@@ -46,6 +48,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('Plotting utility for the temperature logger')
     parser.add_argument('-d', '--data', help='File with temperature data')
     parser.add_argument('-r', '--calibration', help='File with ADC calibration measurements')
+    parser.add_argument('-o', '--output', help='Save plot to here')
+    parser.add_argument('-l', '--probe-label', default='Radiator',
+                        help='Label for the data on ADC 2 (the sensor on the long cable)')
 
     args = parser.parse_args()
 
@@ -54,8 +59,10 @@ if __name__ == '__main__':
     adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
 
 
-    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC 1', 'ADC 2'])
-    print(df_temp)
+    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC 1', 'ADC 2'], on_bad_lines='warn')
+
+    df_temp['time'] = pd.to_datetime(df_temp['esp_time'], unit='s',
+                                     origin='2000-01-01') # epoch of ESP32 clock
     df_temp['V_1'] = adc_response(df_temp['ADC 1'])
     df_temp['V_2'] = adc_response(df_temp['ADC 2'])
     df_temp['R_1'] = convert_voltage_to_resistance(df_temp['V_1'])
@@ -63,5 +70,19 @@ if __name__ == '__main__':
     df_temp['T_1'] = ntc_response(df_temp['R_1'])
     df_temp['T_2'] = ntc_response(df_temp['R_2'])
 
-    print(df_temp)
-    # main(args)
+    fig, ax = plt.subplots(1, 1)
+
+    ax.plot(df_temp['time'], df_temp['T_1'], label='Air')
+    ax.plot(df_temp['time'], df_temp['T_2'], label=args.probe_label)
+    ax.legend()
+
+    ax.xaxis.set_major_formatter(ConciseDateFormatter(ax.xaxis.get_major_locator()))
+
+    ax.set_ylabel('Temperature [°C]')
+
+    plt.grid()
+
+    if args.output:
+        fig.savefig(args.output, dpi=300)
+    else:
+        fig.show()
