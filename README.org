@@ -1,0 +1,48 @@
+#+TITLE: ESP32-Based Temperature Logger
+
+
+* Assembly
+  Using an ESP32 dev board, assemble a circuit according to the schematic in [[temperaturelogger_Schematics.pdf]].
+  ~NTC1~ and ~NTC2~ need to be thermistors from the Vishay NTCLE100E3 family with $R_{25} \in [2.2, 10]\,\mathrm{k\Omega}$.
+  The code assumes $R_{25} = 10\,\mathrm{k\Omega}$, but can be easily adapted by changing the ~resistor~ argument to the ~convert_voltage_to_resistance~ function in ~visualise.py~.
+  The values of ~R1~ ad ~R2~ do not matter much, as long as the voltage across the NTC stays in the range $0.5\dots 2.5\,\mathrm{V}$ for typical temperatures, as the ADCs become nonlinear outside of it.
+  I went with $10\,\mathrm{k\Omega}$, i.e. the same as the nominal value of the NTCs.
+
+* Installation
+  In order to automatically set the clock on the ESP32, it needs to connect to the internet.
+  Put your wifi credentials in a file ~wifi.cfg~ with the SSID on the first and the password on the second line.
+  It will be ignored by git.
+
+  Connect the board to your PC and copy the files over with [[https://github.com/adafruit/ampy][~ampy~]].
+  Assuming it is connected as ~/dev/ttyUSB0~, use
+  #+BEGIN_SRC shell
+  ampy --port /dev/ttyUSB0 put boot.py
+  ampy --port /dev/ttyUSB0 put main.py
+  ampy --port /dev/ttyUSB0 put wifi.cfg
+  #+END_SRC
+  Place the sensors somewhere interesting and maybe reboot the chip.
+  As long as it has power, it will write the raw ADC readouts and a timestamp to a file ~data.csv~ in its memory.
+  Use
+  #+BEGIN_SRC shell
+  ampy --port /dev/ttyUSB0 get data.csv > data.csv
+  ampy --port /dev/ttyUSB0 rm data.csv
+  #+END_SRC
+  to retrieve the measurements and make space for new ones.
+  
+** Calibration
+   Before the raw output of the ADC can be converted into a voltage, it needs to be calibrated.
+   Collect various voltage values and their corresponding ADC outputs in a spreadsheet with the columns ~ADC Readout~ and ~Measured Voltage [V]~.
+   As an easy solution, you can replace one of the NTCs with regular resistors and measure the voltage across it with a multimeter.
+
+   You can create a plot of the calibration curve with
+   #+BEGIN_SRC shell
+   ./calibration_plotter.py data/calibration.ods -o calib.png
+   #+END_SRC
+
+* Visualisation
+  After retrieving the data from the ESP, you can run
+  #+BEGIN_SRC shell
+  ./visualise.py -r data/calibration.ods -d data/data.csv -o measurement.png
+  #+END_SRC
+  to create and save a plot.
+  Omitting the ~-o~ argument will just display the plot (but not under wayland due to some bug in matplotlib).
