@@ -2,7 +2,7 @@
 
 
 * Assembly
-  Using an ESP32 dev board, assemble a circuit according to the schematic in [[temperaturelogger_Schematics.pdf]].
+  Using an ESP32 dev board, assemble a circuit according to the schematic in [[./temperaturelogger_Schematics.pdf]]
   ~NTC1~ and ~NTC2~ need to be thermistors from the Vishay NTCLE100E3 family with $R_{25} \in [2.2, 10]\,\mathrm{k\Omega}$.
   The code assumes $R_{25} = 10\,\mathrm{k\Omega}$, but can be easily adapted by changing the ~resistor~ argument to the ~convert_voltage_to_resistance~ function in ~visualise.py~.
   The values of ~R1~ ad ~R2~ do not matter much, as long as the voltage across the NTC stays in the range $0.5\dots 2.5\,\mathrm{V}$ for typical temperatures, as the ADCs become nonlinear outside of it.
@@ -13,7 +13,7 @@
   Put your wifi credentials in a file ~wifi.cfg~ with the SSID on the first and the password on the second line.
   It will be ignored by git.
 
-  Connect the board to your PC and copy the files over with [[https://github.com/adafruit/ampy][~ampy~]].
+  Connect the board to your PC and copy the files over with [[https://github.com/adafruit/ampy][ampy]].
   Assuming it is connected as ~/dev/ttyUSB0~, use
   #+BEGIN_SRC shell
   ampy --port /dev/ttyUSB0 put boot.py
@@ -45,4 +45,4 @@
   ./visualise.py -r data/calibration.ods -d data/data.csv -o measurement.png
   #+END_SRC
   to create and save a plot.
-  Omitting the ~-o~ argument will just display the plot (but not under wayland due to some bug in matplotlib).
+  Omitting the ~-o~ argument will just display the plot (but not under wayland due to some bug in matplotlib or its backend).
