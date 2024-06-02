@@ -8,6 +8,8 @@
   The values of ~R1~ ad ~R2~ do not matter much, as long as the voltage across the NTC stays in the range $0.5\dots 2.5\,\mathrm{V}$ for typical temperatures, as the ADCs become nonlinear outside of it.
   I went with $10\,\mathrm{k\Omega}$, i.e. the same as the nominal value of the NTCs.
 
+  Load the MicroPython firmware on the ESP32 as described in the [[https://docs.micropython.org/en/latest/esp32/tutorial/intro.html][MicroPython documentation]].
+
 * Installation
   In order to automatically set the clock on the ESP32, it needs to connect to the internet.
   Put your wifi credentials in a file ~wifi.cfg~ with the SSID on the first and the password on the second line.
