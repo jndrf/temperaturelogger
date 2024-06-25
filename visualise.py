@@ -89,16 +89,21 @@ if __name__ == '__main__':
 
     df_calib = pd.read_excel(args.calibration)
 
-    adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
-
     # sometimes, a line is garbled. Either it contains too many columns
-    # or a ridiculously large time stamp (as of writing, approximately 7.7e8 seconds have passed
-    # since 2000-01-01, the epoch used on the ESP32.
+    # or the columns are not complete and contain NaN values
     df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC_1', 'ADC_2'], on_bad_lines='warn')
     df_temp.dropna(inplace=True)
+
+    # Also, some timestamps are nonsensical, either too large or too small
     to_delete = clean_esp_time(df_temp['esp_time'])
     df_temp.drop(index=to_delete, inplace=True)
 
+    # quick-and-dirty fix for bogus ADC readout, probably due to a short in the wire
+    # should use something like outlier detection for proper treatment
+    df_temp.query('ADC_1 > 10 & ADC_2 > 10', inplace=True)
+
+    # Convert readouts into times and temperatures
+    adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
     df_temp['time'] = pd.to_datetime(df_temp['esp_time'], unit='s',
                                      origin='2000-01-01')  # epoch of ESP32 clock
     df_temp['V_1'] = adc_response(df_temp['ADC_1'])
@@ -109,6 +114,7 @@ if __name__ == '__main__':
     df_temp['T_1'] = ntc_response(df_temp['R_1'])
     df_temp['T_2'] = ntc_response(df_temp['R_2'])
 
+    # and finally, visualise the results
     fig, ax = plt.subplots(1, 1)
 
     ax.plot(df_temp['time'], df_temp['T_1'], label='Air')

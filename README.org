@@ -58,3 +58,6 @@
    - If the third timestamp is the smallest of the three, it is corrected such that the intervals between the three timestamps are the same.
    - If the second timestamp is the largest, it is replaced by the mean between the first and third timestamp.
      However, if those are more than 30 s apart, the second row is removed instead.
+
+   Very rarely, there can be extremely low ADC readouts.
+   These are most likely due to a temporary short in the cable holding the second ADC, and thus lines were either ADC has a readout smaller than 10 are removed.
