@@ -18,9 +18,8 @@ def adc_readout(adcs, n_reads=20):
 
 
 while True:
-    readings = [ntc.read() for ntc in ntcs]
     line = [time.time()]
-    line.extend(readings)
+    line.extend(adc_readout(ntcs, n_reads=100))
     line = [str(item) for item in line]
     
     with open('data.csv', 'a') as f:
