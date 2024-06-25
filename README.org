@@ -48,3 +48,13 @@
   #+END_SRC
   to create and save a plot.
   Omitting the ~-o~ argument will just display the plot (but not under wayland due to some bug in matplotlib or its backend).
+
+** Data Cleaning
+   Some entries in the CSV file are clearly erraneous.
+   Lines with more than three fields or ~NaN~ values are removed.
+   Timestamps should be consecutive and approx. 10 s apart.
+   However, some timestamps are nonsensical, either too small or too large.
+   These are cleaned with the ~clean_esp_time~ function, which looks at three consecutive rows:
+   - If the third timestamp is the smallest of the three, it is corrected such that the intervals between the three timestamps are the same.
+   - If the second timestamp is the largest, it is replaced by the mean between the first and third timestamp.
+     However, if those are more than 30 s apart, the second row is removed instead.

@@ -43,6 +43,39 @@ def ntc_response(resistance, rref=10e3):
     t_invers = A_1 + B_1*logratio + C_1*logratio**2 + D_1*logratio**3
     return 1/t_invers - 273.15  # convert to degree Celsius
 
+
+def clean_esp_time(series, max_difference=30):
+    '''clean wrong entries from the time stamps by averaging
+
+    series: pd.Series containing integer timestamps
+    max_difference: if sensible values are further apart than this,
+        the row between will be removed.
+
+    returns a list of row indices to be dropped from the dataframe
+    '''
+
+    to_delete = []
+    windows = series.rolling(window=3, center=True)
+    for index, window in enumerate(windows):
+        if window.size < 3:
+            continue
+
+        # correct for too small timestamps
+        if min(window) == window.iloc[2]:
+            new = window.iloc[1] + (window.iloc[1] - window.iloc[0])
+            series.iloc[index+1] = new
+            window.iloc[2] = new
+
+        # correct for too large timestamps
+        if max(window) == window.iloc[1]:
+            timedelta = window.iloc[0] + window.iloc[2]
+            if timedelta > max_difference:
+                to_delete.append(index)
+            new = (window.iloc[0] + window.iloc[2])/2
+            series.iloc[index] = new
+
+    return to_delete
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser('Plotting utility for the temperature logger')
@@ -58,13 +91,19 @@ if __name__ == '__main__':
 
     adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
 
-
+    # sometimes, a line is garbled. Either it contains too many columns
+    # or a ridiculously large time stamp (as of writing, approximately 7.7e8 seconds have passed
+    # since 2000-01-01, the epoch used on the ESP32.
     df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC 1', 'ADC 2'], on_bad_lines='warn')
+    df_temp.dropna(inplace=True)
+    to_delete = clean_esp_time(df_temp['esp_time'])
+    df_temp.drop(index=to_delete, inplace=True)
 
     df_temp['time'] = pd.to_datetime(df_temp['esp_time'], unit='s',
-                                     origin='2000-01-01') # epoch of ESP32 clock
+                                     origin='2000-01-01')  # epoch of ESP32 clock
     df_temp['V_1'] = adc_response(df_temp['ADC 1'])
     df_temp['V_2'] = adc_response(df_temp['ADC 2'])
+
     df_temp['R_1'] = convert_voltage_to_resistance(df_temp['V_1'])
     df_temp['R_2'] = convert_voltage_to_resistance(df_temp['V_2'])
     df_temp['T_1'] = ntc_response(df_temp['R_1'])
