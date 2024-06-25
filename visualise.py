@@ -94,15 +94,15 @@ if __name__ == '__main__':
     # sometimes, a line is garbled. Either it contains too many columns
     # or a ridiculously large time stamp (as of writing, approximately 7.7e8 seconds have passed
     # since 2000-01-01, the epoch used on the ESP32.
-    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC 1', 'ADC 2'], on_bad_lines='warn')
+    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC_1', 'ADC_2'], on_bad_lines='warn')
     df_temp.dropna(inplace=True)
     to_delete = clean_esp_time(df_temp['esp_time'])
     df_temp.drop(index=to_delete, inplace=True)
 
     df_temp['time'] = pd.to_datetime(df_temp['esp_time'], unit='s',
                                      origin='2000-01-01')  # epoch of ESP32 clock
-    df_temp['V_1'] = adc_response(df_temp['ADC 1'])
-    df_temp['V_2'] = adc_response(df_temp['ADC 2'])
+    df_temp['V_1'] = adc_response(df_temp['ADC_1'])
+    df_temp['V_2'] = adc_response(df_temp['ADC_2'])
 
     df_temp['R_1'] = convert_voltage_to_resistance(df_temp['V_1'])
     df_temp['R_2'] = convert_voltage_to_resistance(df_temp['V_2'])
