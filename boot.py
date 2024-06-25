@@ -21,3 +21,6 @@ while not nic.isconnected():
 # set RTC clock to current time
 ntptime.settime()
 nic.disconnect()
+
+with open('system.log', 'a') as f:
+    f.write(f'{time.time()}: finished boot sequence\n')
