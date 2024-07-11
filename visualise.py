@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import configparser
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from matplotlib.dates import ConciseDateFormatter
-from numpy import log
+from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
 from calibration_plotter import determine_adc_response
 
@@ -124,15 +123,17 @@ if __name__ == '__main__':
     # and finally, visualise the results
     fig, ax = plt.subplots(1, 1)
 
-    ax.plot(df_temp['time'], df_temp['T_1'], label='Air')
+    ax.plot(df_temp['time'], df_temp['T_1'], label='Kitchen')
     ax.plot(df_temp['time'], df_temp['T_2'], label=args.probe_label)
     ax.legend()
 
     ax.xaxis.set_major_formatter(ConciseDateFormatter(ax.xaxis.get_major_locator()))
+    ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.yaxis.set_minor_locator(MultipleLocator(1))
 
     ax.set_ylabel('Temperature [°C]')
 
-    plt.grid()
+    plt.grid(which='both')
 
     if args.output:
         fig.savefig(args.output, dpi=300)
