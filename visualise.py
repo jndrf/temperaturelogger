@@ -91,7 +91,11 @@ if __name__ == '__main__':
 
     # sometimes, a line is garbled. Either it contains too many columns
     # or the columns are not complete and contain NaN values
-    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC_1', 'ADC_2'], on_bad_lines='warn')
+    df_temp = pd.read_csv(args.data, names=['esp_time', 'ADC_1_raw', 'ADC_2_raw'], on_bad_lines='warn')
+
+    df_temp['ADC_1'] = pd.to_numeric(df_temp['ADC_1_raw'], errors='coerce')
+    df_temp['ADC_2'] = pd.to_numeric(df_temp['ADC_2_raw'], errors='coerce')
+
     df_temp.dropna(inplace=True)
 
     # Also, some timestamps are nonsensical, either too large or too small
