@@ -104,7 +104,9 @@ if __name__ == '__main__':
 
     # quick-and-dirty fix for bogus ADC readout, probably due to a short in the wire
     # should use something like outlier detection for proper treatment
-    df_temp.query('ADC_1 > 10 & ADC_2 > 10', inplace=True)
+    df_temp.query('ADC_1 > 20 & ADC_2 > 20', inplace=True)
+    # also ignore entries with a disconnected wire
+    df_temp.query('ADC_1 <= 4095 & ADC_2 <= 4095', inplace=True)
 
     # Convert readouts into times and temperatures
     adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
