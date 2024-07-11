@@ -110,7 +110,8 @@ if __name__ == '__main__':
 
     # Convert readouts into times and temperatures
     adc_response = determine_adc_response(df_calib['ADC Readout'], df_calib['Measured Voltage [V]'])
-    df_temp['time'] = pd.to_datetime(df_temp['esp_time'], unit='s',
+    df_temp['esp_time_shifted'] = df_temp['esp_time'] + 7200 # Timezone, I live in UTC+2 atm
+    df_temp['time'] = pd.to_datetime(df_temp['esp_time_shifted'], unit='s',
                                      origin='2000-01-01')  # epoch of ESP32 clock
     df_temp['V_1'] = adc_response(df_temp['ADC_1'])
     df_temp['V_2'] = adc_response(df_temp['ADC_2'])
